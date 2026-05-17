@@ -4,6 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   MessageCircle,
   Instagram,
@@ -23,6 +27,10 @@ import {
   Quote,
   Send,
   Gem,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingCart,
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = "2348039666787";
@@ -191,10 +199,12 @@ function ProductCard({
   product,
   isLiked,
   onLike,
+  onAddToCart,
 }: {
   product: Product;
   isLiked: boolean;
   onLike: () => void;
+  onAddToCart: (product: Product) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const discount = product.originalPrice
@@ -252,14 +262,21 @@ function ProductCard({
 
           {/* Quick View - appears on hover */}
           <motion.div
-            className="absolute bottom-4 left-4 right-4 z-10"
+            className="absolute bottom-4 left-4 right-4 z-10 flex gap-2"
             initial={false}
             animate={isHovered ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
           >
             <Button
+              onClick={() => onAddToCart(product)}
+              className="flex-1 bg-deep-rose hover:bg-rose-gold backdrop-blur-md text-white rounded-xl h-11 text-sm font-semibold shadow-xl border border-white/10"
+            >
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Add to Cart
+            </Button>
+            <Button
               asChild
-              className="w-full bg-green-500/90 hover:bg-green-600 backdrop-blur-md text-white rounded-xl h-11 text-sm font-semibold shadow-xl border border-white/10"
+              className="flex-1 bg-green-500/90 hover:bg-green-600 backdrop-blur-md text-white rounded-xl h-11 text-sm font-semibold shadow-xl border border-white/10"
             >
               <a
                 href={getWhatsAppLink(product.name)}
@@ -267,7 +284,7 @@ function ProductCard({
                 rel="noopener noreferrer"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Order on WhatsApp
+                Order
               </a>
             </Button>
           </motion.div>
@@ -320,23 +337,179 @@ function ProductCard({
             )}
           </div>
 
-          {/* WhatsApp Button (always visible on mobile) */}
-          <Button
-            asChild
-            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-10 text-xs font-bold tracking-wide shadow-md shadow-green-600/15 transition-all hover:shadow-lg hover:shadow-green-600/25 md:hidden mt-2"
-          >
-            <a
-              href={getWhatsAppLink(product.name)}
-              target="_blank"
-              rel="noopener noreferrer"
+          {/* Action Buttons (always visible on mobile) */}
+          <div className="flex gap-2 md:hidden mt-2">
+            <Button
+              onClick={() => onAddToCart(product)}
+              className="flex-1 bg-deep-rose hover:bg-rose-gold text-white rounded-xl h-10 text-xs font-bold tracking-wide"
             >
-              <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-              Order on WhatsApp
-            </a>
-          </Button>
+              <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
+              Add to Cart
+            </Button>
+            <Button
+              asChild
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl h-10 text-xs font-bold tracking-wide"
+            >
+              <a
+                href={getWhatsAppLink(product.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                Order
+              </a>
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ===== Cart Item Type =====
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+// ===== Checkout Form Component =====
+function CheckoutForm({
+  items,
+  total,
+  onClose,
+  onClearCart,
+}: {
+  items: CartItem[];
+  total: number;
+  onClose: () => void;
+  onClearCart: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+  const [orderPlaced, setOrderPlaced] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setOrderPlaced(true);
+  };
+
+  if (orderPlaced) {
+    const itemsList = items
+      .map((item) => `${item.product.name} x${item.quantity} - ₦${(item.product.price * item.quantity).toLocaleString()}`)
+      .join("\n");
+    const message = encodeURIComponent(
+      `New Order from ${formData.name}:\n\n${itemsList}\n\nTotal: ₦${total.toLocaleString()}\n\nContact: ${formData.phone}\nEmail: ${formData.email}\nAddress: ${formData.address}`
+    );
+    
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+          <MessageCircle className="w-8 h-8 text-green-600" />
+        </div>
+        <h3 className="text-xl font-bold">Order Placed Successfully!</h3>
+        <p className="text-muted-foreground font-light">
+          Your order has been received. You will be redirected to WhatsApp to complete your order.
+        </p>
+        <div className="flex gap-2 justify-center pt-4">
+          <Button
+            onClick={() => {
+              window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
+              onClearCart();
+              onClose();
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white rounded-full"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Continue on WhatsApp
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Full Name</Label>
+        <Input
+          id="name"
+          placeholder="Enter your name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number</Label>
+        <Input
+          id="phone"
+          type="tel"
+          placeholder="Enter your phone number"
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="address">Delivery Address</Label>
+        <textarea
+          id="address"
+          placeholder="Enter your delivery address"
+          className="w-full min-h-[80px] p-3 rounded-lg border border-input bg-background text-sm"
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          required
+        />
+      </div>
+      
+      <div className="border-t pt-4 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Items ({items.reduce((sum, i) => sum + i.quantity, 0)})</span>
+          <span>₦{total.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Delivery</span>
+          <span>Calculated at checkout</span>
+        </div>
+        <div className="flex justify-between font-bold text-lg">
+          <span>Total</span>
+          <span className="text-deep-rose">₦{total.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          className="flex-1 rounded-full"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          className="flex-1 bg-deep-rose hover:bg-rose-gold text-white rounded-full"
+        >
+          <MessageCircle className="w-4 h-4 mr-2" />
+          Place Order
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -345,6 +518,9 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [likedProducts, setLikedProducts] = useState<Set<number>>(new Set());
   const [scrolled, setScrolled] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -352,6 +528,9 @@ export default function Home() {
   });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
+  const cartTotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -367,6 +546,37 @@ export default function Home() {
       return next;
     });
   };
+
+  const addToCart = (product: Product) => {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.product.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+    setCartOpen(true);
+  };
+
+  const removeFromCart = (productId: number) => {
+    setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
+  };
+
+  const updateQuantity = (productId: number, delta: number) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.product.id === productId
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item
+      )
+    );
+  };
+
+  const clearCart = () => setCartItems([]);
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -415,8 +625,19 @@ export default function Home() {
               ))}
               <div className={`ml-3 pl-3 border-l transition-colors duration-500 ${scrolled ? "border-blush/30" : "border-white/15"}`}>
                 <Button
+                  onClick={() => setCartOpen(true)}
+                  className="relative bg-gradient-to-r from-deep-rose to-rose-gold hover:opacity-90 text-white rounded-full px-4 shadow-lg shadow-deep-rose/20 hover:shadow-deep-rose/40 transition-all btn-glow"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-warm-gold text-[10px] font-bold text-luxury-dark rounded-full flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Button>
+                <Button
                   asChild
-                  className="bg-gradient-to-r from-deep-rose to-rose-gold hover:opacity-90 text-white rounded-full px-6 shadow-lg shadow-deep-rose/20 hover:shadow-deep-rose/40 transition-all btn-glow"
+                  className="ml-2 bg-gradient-to-r from-deep-rose to-rose-gold hover:opacity-90 text-white rounded-full px-6 shadow-lg shadow-deep-rose/20 hover:shadow-deep-rose/40 transition-all btn-glow"
                 >
                   <a
                     href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -436,14 +657,15 @@ export default function Home() {
 
             {/* Mobile Menu Toggle */}
             <button
-              className={`md:hidden w-10 h-10 rounded-full flex items-center justify-center transition-all ${scrolled ? "bg-soft-pink/30" : "bg-white/10 backdrop-blur-sm"}`}
+              type="button"
+              className={`md:hidden z-50 w-12 h-12 rounded-full flex items-center justify-center transition-all pointer-events-auto ${scrolled ? "bg-soft-pink/50" : "bg-white/20 backdrop-blur-sm"}`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
-                <X className={`w-5 h-5 ${scrolled ? "text-deep-rose" : "text-white"}`} />
+                <X className={`w-6 h-6 ${scrolled ? "text-deep-rose" : "text-white"}`} />
               ) : (
-                <Menu className={`w-5 h-5 ${scrolled ? "text-deep-rose" : "text-white"}`} />
+                <Menu className={`w-6 h-6 ${scrolled ? "text-deep-rose" : "text-white"}`} />
               )}
             </button>
           </div>
@@ -456,7 +678,7 @@ export default function Home() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className={`md:hidden overflow-hidden border-t transition-colors duration-500 ${scrolled ? "bg-white/95 backdrop-blur-xl border-blush/20" : "bg-luxury-dark/80 backdrop-blur-xl border-white/10"}`}
+              className={`md:hidden fixed top-[60px] left-0 right-0 z-40 overflow-auto border-t transition-colors duration-500 ${scrolled ? "bg-white/95 backdrop-blur-xl border-blush/20" : "bg-luxury-dark/95 backdrop-blur-xl border-white/10"}`}
             >
               <div className="px-4 py-6 space-y-1">
                 {[
@@ -464,23 +686,44 @@ export default function Home() {
                   { href: "#products", label: "Collection" },
                   { href: "#about", label: "About" },
                   { href: "#contact", label: "Contact" },
-                ].map((item, i) => (
-                  <motion.a
+                ].map((item) => (
+                  <button
                     key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-3 px-4 rounded-xl font-medium transition-all ${scrolled ? "text-foreground/70 hover:bg-soft-pink/30 hover:text-deep-rose" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setTimeout(() => {
+                        const element = document.querySelector(item.href);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }, 100);
+                    }}
+                    className={`w-full text-left block py-4 px-4 rounded-xl font-medium transition-all min-h-[50px] flex items-center cursor-pointer active:scale-95 ${scrolled ? "text-foreground/70 hover:bg-soft-pink/30 hover:text-deep-rose" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
                   >
                     {item.label}
-                  </motion.a>
+                  </button>
                 ))}
-                <div className="pt-3">
+                <div className="pt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setCartOpen(true);
+                    }}
+                    className="flex-1 bg-deep-rose text-white rounded-xl h-12 shadow-lg relative cursor-pointer active:scale-95"
+                  >
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Cart
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-warm-gold text-[10px] font-bold text-luxury-dark rounded-full flex items-center justify-center">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Button>
                   <Button
                     asChild
-                    className="w-full bg-gradient-to-r from-deep-rose to-rose-gold text-white rounded-xl h-12 shadow-lg"
+                    className="flex-1 bg-green-600 text-white rounded-xl h-12 shadow-lg cursor-pointer active:scale-95"
                   >
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -490,7 +733,7 @@ export default function Home() {
                       rel="noopener noreferrer"
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      Shop on WhatsApp
+                      WhatsApp
                     </a>
                   </Button>
                 </div>
@@ -499,6 +742,133 @@ export default function Home() {
           )}
         </AnimatePresence>
       </nav>
+
+      {/* ===== Cart Drawer ===== */}
+      <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+        <SheetContent className="w-full sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              Shopping Cart ({cartCount})
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 flex flex-col h-[calc(100%-120px)]">
+            {cartItems.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+                <ShoppingBag className="w-16 h-16 text-muted-foreground/30 mb-4" />
+                <p className="text-muted-foreground font-light">Your cart is empty</p>
+                <Button
+                  onClick={() => setCartOpen(false)}
+                  variant="outline"
+                  className="mt-4 rounded-full"
+                >
+                  Continue Shopping
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto space-y-4">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.product.id}
+                      className="flex gap-4 p-4 bg-soft-pink/20 rounded-xl"
+                    >
+                      <img
+                        src={item.product.image}
+                        alt={item.product.name}
+                        className="w-20 h-20 object-cover rounded-lg"
+                      />
+                      <div className="flex-1 space-y-2">
+                        <h4 className="font-semibold text-sm line-clamp-2">
+                          {item.product.name}
+                        </h4>
+                        <p className="text-deep-rose font-bold">
+                          ₦{item.product.price.toLocaleString()}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQuantity(item.product.id, -1)}
+                            className="w-7 h-7 rounded-full bg-white border flex items-center justify-center hover:bg-soft-pink/30"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-8 text-center font-medium">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.product.id, 1)}
+                            className="w-7 h-7 rounded-full bg-white border flex items-center justify-center hover:bg-soft-pink/30"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.product.id)}
+                            className="ml-auto w-8 h-8 rounded-full flex items-center justify-center text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground font-light">Subtotal</span>
+                    <span className="text-xl font-bold text-deep-rose">
+                      ₦{cartTotal.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        const itemsList = cartItems
+                          .map((item) => `${item.product.name} x${item.quantity} - ₦${(item.product.price * item.quantity).toLocaleString()}`)
+                          .join('\n');
+                        const message = encodeURIComponent(
+                          `Hi Poshpavilion! I'd like to order:\n\n${itemsList}\n\nTotal: ₦${cartTotal.toLocaleString()}`
+                        );
+                        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+                      }}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-full h-12"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Order on WhatsApp
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setCartOpen(false);
+                        setCheckoutOpen(true);
+                      }}
+                      className="flex-1 bg-deep-rose hover:bg-rose-gold text-white rounded-full h-12"
+                    >
+                      Checkout
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ===== Checkout Modal ===== */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              Checkout
+            </DialogTitle>
+          </DialogHeader>
+          <CheckoutForm
+            items={cartItems}
+            total={cartTotal}
+            onClose={() => setCheckoutOpen(false)}
+            onClearCart={clearCart}
+          />
+        </DialogContent>
+      </Dialog>
 
       <main className="flex-1">
         {/* ===== Hero Section ===== */}
@@ -598,8 +968,7 @@ export default function Home() {
                 <Button
                   asChild
                   size="lg"
-                  className="rounded-full px-8 h-14 border-white/15 text-white/80 hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all"
-                  variant="outline"
+                  className="rounded-full px-8 h-14 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/25 transition-all"
                 >
                   <a
                     href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -709,6 +1078,7 @@ export default function Home() {
                     product={product}
                     isLiked={likedProducts.has(product.id)}
                     onLike={() => toggleLike(product.id)}
+                    onAddToCart={addToCart}
                   />
                 </motion.div>
               ))}
@@ -1146,8 +1516,7 @@ export default function Home() {
                 <Button
                   asChild
                   size="lg"
-                  variant="outline"
-                  className="border-white/25 text-white hover:bg-white/10 rounded-full px-8 h-14 backdrop-blur-sm"
+                  className="border-2 border-white/30 bg-white/10 hover:bg-white/20 text-white rounded-full px-8 h-14 backdrop-blur-sm shadow-lg"
                 >
                   <a
                     href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
