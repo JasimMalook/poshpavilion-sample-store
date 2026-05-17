@@ -145,7 +145,7 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
     return () => observer.disconnect();
   }, [target, hasAnimated]);
 
-  return <div ref={ref}>{count}{suffix}</div>;
+  return <span ref={ref}>{count}{suffix}</span>;
 }
 
 // ===== Marquee Component =====
