@@ -21,7 +21,7 @@ import {
   Mail,
 } from "lucide-react";
 
-const WHATSAPP_NUMBER = "1234567890";
+const WHATSAPP_NUMBER = "2348039666787";
 const INSTAGRAM_HANDLE = "poshpavilion";
 
 interface Product {
@@ -898,7 +898,7 @@ export default function Home() {
             <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-foreground/40">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <span>+92 123 456 7890</span>
+                <span>+234 803 966 6787</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
