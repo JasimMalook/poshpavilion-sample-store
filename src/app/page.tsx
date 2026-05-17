@@ -374,7 +374,7 @@ export default function Home() {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "glass shadow-lg shadow-black/5 py-3"
+            ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-black/5 py-3"
             : "bg-transparent py-5"
         }`}
       >
@@ -387,10 +387,10 @@ export default function Home() {
               </div>
               <div className="flex flex-col">
                 <span className="text-lg md:text-xl font-bold tracking-tight leading-none">
-                  <span className="text-gradient-rose">Posh</span>
-                  <span className="text-gradient-gold">pavilion</span>
+                  <span className={`transition-colors duration-500 ${scrolled ? "text-gradient-rose" : "text-white"}`}>Posh</span>
+                  <span className={`transition-colors duration-500 ${scrolled ? "text-gradient-gold" : "text-warm-gold"}`}>pavilion</span>
                 </span>
-                <span className="text-[8px] tracking-[0.35em] text-warm-gold/70 uppercase font-medium">
+                <span className={`text-[8px] tracking-[0.35em] uppercase font-medium transition-colors duration-500 ${scrolled ? "text-warm-gold/70" : "text-white/50"}`}>
                   Luxury Footwear
                 </span>
               </div>
@@ -407,13 +407,13 @@ export default function Home() {
                 <a
                   key={item.href}
                   href={item.href}
-                  className="relative px-4 py-2 text-sm font-medium text-foreground/60 hover:text-deep-rose transition-colors group/nav"
+                  className={`relative px-4 py-2 text-sm font-medium transition-colors group/nav ${scrolled ? "text-foreground/60 hover:text-deep-rose" : "text-white/70 hover:text-white"}`}
                 >
                   {item.label}
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-rose-gold to-warm-gold group-hover/nav:w-full transition-all duration-300" />
                 </a>
               ))}
-              <div className="ml-3 pl-3 border-l border-blush/30">
+              <div className={`ml-3 pl-3 border-l transition-colors duration-500 ${scrolled ? "border-blush/30" : "border-white/15"}`}>
                 <Button
                   asChild
                   className="bg-gradient-to-r from-deep-rose to-rose-gold hover:opacity-90 text-white rounded-full px-6 shadow-lg shadow-deep-rose/20 hover:shadow-deep-rose/40 transition-all btn-glow"
@@ -436,14 +436,14 @@ export default function Home() {
 
             {/* Mobile Menu Toggle */}
             <button
-              className="md:hidden w-10 h-10 rounded-full glass flex items-center justify-center"
+              className={`md:hidden w-10 h-10 rounded-full flex items-center justify-center transition-all ${scrolled ? "bg-soft-pink/30" : "bg-white/10 backdrop-blur-sm"}`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
-                <X className="w-5 h-5 text-deep-rose" />
+                <X className={`w-5 h-5 ${scrolled ? "text-deep-rose" : "text-white"}`} />
               ) : (
-                <Menu className="w-5 h-5 text-deep-rose" />
+                <Menu className={`w-5 h-5 ${scrolled ? "text-deep-rose" : "text-white"}`} />
               )}
             </button>
           </div>
@@ -456,7 +456,7 @@ export default function Home() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden glass border-t border-white/10 overflow-hidden"
+              className={`md:hidden overflow-hidden border-t transition-colors duration-500 ${scrolled ? "bg-white/95 backdrop-blur-xl border-blush/20" : "bg-luxury-dark/80 backdrop-blur-xl border-white/10"}`}
             >
               <div className="px-4 py-6 space-y-1">
                 {[
@@ -469,7 +469,7 @@ export default function Home() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block py-3 px-4 rounded-xl text-foreground/70 hover:bg-soft-pink/30 hover:text-deep-rose font-medium transition-all"
+                    className={`block py-3 px-4 rounded-xl font-medium transition-all ${scrolled ? "text-foreground/70 hover:bg-soft-pink/30 hover:text-deep-rose" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
@@ -542,7 +542,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.8 }}
               >
-                <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-xs font-semibold tracking-[0.2em] text-warm-gold uppercase mb-8">
+                <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-warm-gold/15 backdrop-blur-md border border-warm-gold/25 text-xs font-semibold tracking-[0.2em] text-warm-gold uppercase mb-8 shadow-lg shadow-warm-gold/10">
                   <Sparkles className="w-3.5 h-3.5" />
                   Summer Collection 2025
                 </span>
